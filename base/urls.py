@@ -5,5 +5,3 @@ from base.views import Test
 urlpatterns = [
     path('test/', Test.as_view(), name='test'),
 ]
-
-
