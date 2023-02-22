@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Book, Chapter, User
+from .models import Book, Chapter, User, Fandom, Genre
 
 
 @admin.register(Book)
@@ -18,3 +18,12 @@ class SettingAdmin(admin.ModelAdmin):
 class SettingAdmin(admin.ModelAdmin):
     list_display = ('name', 'iqos', 'status')
 
+
+@admin.register(Fandom)
+class SettingAdmin(admin.ModelAdmin):
+    list_display = ('name', )
+
+
+@admin.register(Genre)
+class SettingAdmin(admin.ModelAdmin):
+    list_display = ('name', )

@@ -1,4 +1,3 @@
-import time
 import undetected_chromedriver
 from selenium.webdriver.remote.webdriver import By
 import selenium.webdriver.support.expected_conditions as EC
@@ -39,6 +38,3 @@ def parse_book(url: str, genre: str, fandom: str) -> bool:
     finally:
         driver.quit()
         return False
-
-#https://m.fanfiction.net/s/13162660/1/Magic-Knows-No-Boundaries-But-Those-We-Believe-In
-

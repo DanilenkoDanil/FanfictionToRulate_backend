@@ -28,4 +28,9 @@ class User(models.Model):
     status = models.BooleanField(default=False)
 
 
+class Fandom(models.Model):
+    name = models.CharField(max_length=150)
 
+
+class Genre(models.Model):
+    name = models.CharField(max_length=150)
