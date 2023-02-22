@@ -34,3 +34,7 @@ class Fandom(models.Model):
 
 class Genre(models.Model):
     name = models.CharField(max_length=150)
+
+
+class Setting(models.Model):
+    tg_api = models.CharField(max_length=300)

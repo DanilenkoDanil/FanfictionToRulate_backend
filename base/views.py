@@ -1,4 +1,4 @@
-from base.models import Book, Fandom, Genre, Chapter
+from base.models import Book, Fandom, Genre, Chapter, Setting
 from django.http import JsonResponse
 from django.views import View
 from django.db import models
@@ -72,6 +72,14 @@ class BookGenreCollector(BookTypeInterface):
     def __init__(self):
         super(BookGenreCollector, self).__init__()
         self.model = Genre
+
+
+def get_tg_api_key() -> str:
+    api_key = ''
+    try:
+        return Setting.objects.get(id=1).tg_api
+    except Setting.DoesNotExist:
+        return api_key
 
 
 def get_chapter_text(name: str, number: int) -> str:
