@@ -16,7 +16,7 @@ class SettingAdmin(admin.ModelAdmin):
 
 @admin.register(User)
 class SettingAdmin(admin.ModelAdmin):
-    list_display = ('name', 'iqos', 'status')
+    list_display = ('name', 'iqos', 'status', 'telegram_id')
 
 
 @admin.register(Fandom)
