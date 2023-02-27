@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Book, Chapter, User, Fandom, Genre, Setting
+from .models import Book, Chapter, Admin, Fandom, Genre, Setting, ChatGPTCredentials
 
 
 @admin.register(Book)
@@ -14,7 +14,7 @@ class SettingAdmin(admin.ModelAdmin):
     search_fields = ('book', 'name')
 
 
-@admin.register(User)
+@admin.register(Admin)
 class SettingAdmin(admin.ModelAdmin):
     list_display = ('name', 'iqos', 'status')
 
@@ -31,4 +31,9 @@ class SettingAdmin(admin.ModelAdmin):
 
 @admin.register(Setting)
 class SettingAdmin(admin.ModelAdmin):
-    list_display = ('tg_api', )
+    list_display = ('tg_api', 'threads')
+
+
+@admin.register(ChatGPTCredentials)
+class SettingAdmin(admin.ModelAdmin):
+    list_display = ('login', 'password')

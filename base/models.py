@@ -21,7 +21,7 @@ class Chapter(models.Model):
     data = models.DateTimeField(auto_now=True)
 
 
-class User(models.Model):
+class Admin(models.Model):
     name = models.CharField(max_length=150)
     telegram_id = models.CharField(max_length=150)
     iqos = models.BooleanField(default=False)
@@ -38,3 +38,9 @@ class Genre(models.Model):
 
 class Setting(models.Model):
     tg_api = models.CharField(max_length=300)
+    threads = models.PositiveIntegerField(default=0)
+
+
+class ChatGPTCredentials(models.Model):
+    login = models.CharField(max_length=150)
+    password = models.CharField(max_length=149)

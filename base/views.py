@@ -38,11 +38,18 @@ class BooksCollector(BookValueAbstract):
         self.model = Book
 
     def collect_value(self, name: str) -> list:
-        books_list = []
+        book_name = []
         for model_object in self.model.objects.filter(name=name):
             book_str = str(model_object.name) + ' ' + str(model_object.status)
-            books_list.append(book_str)
-        return books_list
+            book_name.append(book_str)
+        return book_name
+
+    def collect_list_books(self):
+        book_list = []
+        for model_object in self.model.objects.all():
+            book_str = str(model_object.name) + ' ' + str(model_object.status)
+            book_list.append(book_str)
+        return book_list
 
 
 class ChaptersCollector(BookValueAbstract):
