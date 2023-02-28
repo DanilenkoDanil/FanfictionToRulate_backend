@@ -1,9 +1,6 @@
-from django.contrib import admin
 from django.urls import path, include
-from base.views import Test
-from rest_framework import routers
 from base.views import FandomListAPIView, GenreListAPIView, BookListAPIView, ChapterListAPIView, \
-    ChapterRetrieveAPIView, CheckBookAPIView
+    ChapterRetrieveAPIView, CheckBookAPIView, ParseBookAPIView, TranslateChapterAPIView
 
 urlpatterns = [
     path('fandoms/', FandomListAPIView.as_view()),
@@ -12,4 +9,6 @@ urlpatterns = [
     path('chapters/<int:pk>/', ChapterListAPIView.as_view()),
     path('chapter_text/<int:pk>/', ChapterRetrieveAPIView.as_view()),
     path('check_book/', CheckBookAPIView.as_view()),
+    path('parse_book/', ParseBookAPIView.as_view()),
+    path('translate_chapter/<int:pk>/', TranslateChapterAPIView.as_view()),
 ]

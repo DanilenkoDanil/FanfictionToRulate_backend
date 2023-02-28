@@ -7,6 +7,7 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters import Text
 from django.core.management.base import BaseCommand
 import os
+from base.views import get_tg_api_key
 
 
 def dec_permission(func):
@@ -20,8 +21,7 @@ def dec_permission(func):
     return user
 
 
-API_TOKEN = ''
-bot = Bot(token=API_TOKEN)
+bot = Bot(token=get_tg_api_key())
 dp = Dispatcher(bot, storage=MemoryStorage())
 
 books_lst = ['book1', 'book2', 'book3']
@@ -71,6 +71,7 @@ async def choose_book(message: types.Message, state: FSMContext):
     for i in books_lst:
         list_of_books += f'{books_lst.index(i) + 1}. {i}\n'
     if data['status'] == 'Перевести' or data['status'] == 'Скачать':
+        print('++++')
         await TranslateFSM.choose_chapter.set()
     if data['status'] == 'Статус':
         await TranslateFSM.book_status.set()

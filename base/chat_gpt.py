@@ -1,33 +1,18 @@
 import time
-
 from threading import Thread
 from googletrans import Translator
 from revChatGPT.V1 import Chatbot
+from base.models import Chapter, Setting, ChatGPTCredentials
+from background_task import background
 
-thread_num = 2
+
 translator = Translator()
-
-account_list = list()
-
-account_list.append(Chatbot(config={
-  "email": "gtaforilona@gmail.com",
-  "password": "Game45666"
-}))
-account_list.append(Chatbot(config={
-  "email": "danilenkodanil.fb05@gmail.com",
-  "password": "Game45666"
-}))
-
-if thread_num > len(account_list):
-    print('Критическая ошибка! Аккаунтов меньше чем потоков!')
-    input()
+packets_dict = dict()
 
 
-def packet_division(path: str) -> dict:
-    with open(path, "r") as file:
-        text = file.read()
-
-    chunks = text.split('\n\n')
+def packet_division(text: str) -> dict:
+    print(text)
+    chunks = text.split('\n')
 
     packets = {}
     counter = 0
@@ -51,7 +36,7 @@ def ask_question(chat_bot, prompt: str):
     return final_text
 
 
-def translate(target_text, chat_bot):
+def translate(target_text, chat_bot) -> str:
     timer = time.time()
     prompt = f'Edit and improve the text, remove the tautology by replacing it with synonyms, remove lexical and grammatical errors, keeping the meaning without cutting or deleting anything:\n'
     prompt += target_text
@@ -69,38 +54,72 @@ def translate(target_text, chat_bot):
     return translator.translate(dest='ru', text=completion).text
 
 
-def packets_translate(packets: list, chat_bot):
+def packets_translate(packets: list, chat_bot) -> None:
     print('Поток пошёл')
     global packets_dict
     for packet in packets:
+
+        print(f'Елемент - {packet} в работе!')
         try:
-            print(f'Елемент - {packet} в работе!')
             try:
                 packets_dict[packet] = translate(packets_dict[packet], chat_bot)
             except KeyError:
                 continue
         except Exception as e:
             print(e)
-            time.sleep(60)
-            packets_dict[packet] = translate(packets_dict[packet], chat_bot)
+            time.sleep(30)
+        packets_dict[packet] = translate(packets_dict[packet], chat_bot)
         print(packets_dict)
 
 
-packets_dict = packet_division('1.txt')
-count_thread_packets = len(packets_dict) // thread_num
-count_thread_packets += 1
-result_list = []
-for i, account in zip(range(thread_num), account_list):
-    th = Thread(target=packets_translate,
-                args=(
-                    list(packets_dict.keys())[i * count_thread_packets:(i + 1) * count_thread_packets], account
-                )
-                )
-    th.start()
+@background
+def translate_chapter(chapter_id):
+    global packets_dict
+    try:
+        settings = Setting.objects.get(id=1)
+    except Setting.DoesNotExist:
+        return False
+    try:
+        chapter = Chapter.objects.get(id=chapter_id)
+    except Chapter.DoesNotExist:
+        return False
 
-result_text = ''
-for i in packets_dict.values():
-    result_text += i
+    thread_num = settings.threads
 
-with open("firstt.txt", "w", encoding="utf-8") as f:
-    f.write(result_text)
+    account_counter = 0
+    account_list = []
+    for account in ChatGPTCredentials.objects.all():
+        if len(account_list) >= thread_num:
+            break
+        account_counter += 1
+
+        account_list.append(Chatbot(config={
+          "email": account.login,
+          "password": account.password
+        }))
+
+    if thread_num > len(account_list):
+        print('Критическая ошибка! Аккаунтов меньше чем потоков!')
+        return False
+
+    packets_dict = packet_division(chapter.text)
+    print(packets_dict)
+    count_thread_packets = len(packets_dict) // thread_num
+    count_thread_packets += 1
+
+    for i, account in zip(range(thread_num), account_list):
+        print(i)
+        th = Thread(target=packets_translate,
+                    args=(
+                        list(packets_dict.keys())[i * count_thread_packets:(i + 1) * count_thread_packets], account
+                    )
+                    )
+        th.start()
+
+    result_text = ''
+    for i in packets_dict.values():
+        result_text += i
+
+    if len(chapter.text) // 2 < len(result_text):
+        chapter.text = result_text
+        chapter.save()
