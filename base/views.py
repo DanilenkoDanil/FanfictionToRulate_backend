@@ -3,6 +3,13 @@ from django.http import JsonResponse
 from django.views import View
 from django.db import models
 from abc import ABC, abstractmethod
+from base.serializers import FandomSerializer, GenreSerializer, BookSerializer, ChapterSerializer, ChapterTextSerializer
+from rest_framework import generics
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import authentication, permissions
+from rest_framework import status
+
 
 
 class Test(View):
@@ -79,6 +86,49 @@ class BookGenreCollector(BookTypeInterface):
     def __init__(self):
         super(BookGenreCollector, self).__init__()
         self.model = Genre
+
+
+class FandomListAPIView(generics.ListAPIView):
+    queryset = Fandom.objects.all()
+    serializer_class = FandomSerializer
+
+
+class GenreListAPIView(generics.ListAPIView):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+
+
+class BookListAPIView(generics.ListAPIView):
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+
+
+class CheckBookAPIView(APIView):
+    # authentication_classes = [authentication.TokenAuthentication]
+    # permission_classes = [permissions.IsAdminUser]
+    queryset = Book.objects.all()
+
+    def post(self, request, format=None):
+        print(request.data)
+        try:
+            Book.objects.get(link=request.data['url'])
+            return Response(status=status.HTTP_200_OK)
+        except Book.DoesNotExist:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChapterListAPIView(generics.ListAPIView):
+    serializer_class = ChapterSerializer
+
+    def get_queryset(self):
+        return Chapter.objects.filter(book__id=self.kwargs['pk'])
+
+
+class ChapterRetrieveAPIView(generics.RetrieveAPIView):
+    serializer_class = ChapterTextSerializer
+
+    def get_queryset(self):
+        return Chapter.objects.filter(id=self.kwargs['pk'])
 
 
 def get_tg_api_key() -> str:
