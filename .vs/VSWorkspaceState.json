@@ -1,0 +1,10 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\base",
+    "\\base\\management",
+    "\\base\\management\\commands"
+  ],
+  "SelectedNode": "\\base\\management\\commands\\bot.py",
+  "PreviewInSolutionExplorer": false
+}

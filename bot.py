@@ -1,4 +1,5 @@
-﻿import requests
+﻿from urllib import request
+import requests
 import os
 import json
 from aiogram import Bot, Dispatcher, executor, types
@@ -62,20 +63,18 @@ async def cancel_handler(message: types.Message, state: FSMContext):
 @dp.message_handler(Text(equals=['Перевести', 'Скачать', 'Статус'], ignore_case=True))
 @dec_permission
 async def choose_book(message: types.Message, state: FSMContext):
-    await message.reply('Выбери книгу', reply_markup=kb_cancel)
     async with state.proxy() as data:
         data['status'] = message.text
-    books_class = BooksCollector()
-    books_lst = books_class.collect_list_books()
-    # books_lst = ['Upon Their Bones: The Rise and Fall of Gellert Grindelwald', ]
+    book_list = requests.get('http://185.26.96.154/api/books/').json()
+    print(book_list)
     list_of_books = ''
-    for i in books_lst:
-        list_of_books += f'{books_lst.index(i) + 1}. {i}\n'
+    for book in book_list:
+        list_of_books += f'{book["id"]}. {book["name"]} --- {book["genre"]} --- {book["fandom"]} --- {book["status"]} \n'
     if data['status'] == 'Перевести' or data['status'] == 'Скачать':
         await TranslateFSM.choose_chapter.set()
     if data['status'] == 'Статус':
         await TranslateFSM.book_status.set()
-    await bot.send_message(message.from_user.id, f'{list_of_books}\nВведи номер книги')
+    await bot.send_message(message.from_user.id, f'Введи номер книги:\n{list_of_books}', reply_markup=kb_cancel)
 
 
 @dp.message_handler(state=TranslateFSM.translate_chapter_num)
