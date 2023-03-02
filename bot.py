@@ -8,9 +8,10 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters import Text
-from tg_bot_key import get_tg_api_key
+from tg_bot_key import get_tg_api_key, get_login_data
 from requests.auth import HTTPBasicAuth
 
+login, password = get_login_data()
 #data = {
 #    "url": 'dat'
 #}
@@ -29,8 +30,8 @@ genre = ['genre1', 'genre2', 'genre3']
 text = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 
 but_parser = KeyboardButton('Спарсить')
-but_translate = KeyboardButton('Перевести')  # +
-but_download = KeyboardButton('Скачать')  # +
+but_translate = KeyboardButton('Перевести')  
+but_download = KeyboardButton('Скачать')  
 but_cancel = KeyboardButton('Отмена')
 kb_cancel = ReplyKeyboardMarkup(resize_keyboard=True)
 kb_cancel.add(but_cancel)
@@ -67,20 +68,21 @@ async def cancel_handler(message: types.Message, state: FSMContext):
     await bot.send_message(message.from_user.id, 'OK', reply_markup=kb_main)
 
 
-@dp.message_handler(Text(equals=['Перевести', 'Скачать', 'Статус'], ignore_case=True))
+@dp.message_handler(Text(equals=['Перевести', 'Скачать'], ignore_case=True))
 @dec_permission
 async def choose_book(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['status'] = message.text
-    books = requests.get('http://185.26.96.154/api/books/', auth=HTTPBasicAuth('Lazair', '9baY2jHszz3XqUy')).json()
-    print(books)
+    books = requests.get('http://185.26.96.154/api/books/', auth=HTTPBasicAuth(login, password)).json()
+    save_name_book = {}
     list_of_books = ''
     for book in books:
-        list_of_books += f'{book["id"]}. {book["name"]} --- {book["genre"]} --- {book["fandom"]} --- {book["status"]} \n'
+        list_of_books += f'{book["id"]}. {book["name"]} --- {book["genre"]} --- {book["fandom"]} --- {book["status"]}\n'
+        save_name_book[str(book["id"])] = book["name"]
+    async with state.proxy() as data:
+        data['book_name'] = save_name_book
     if data['status'] == 'Перевести' or data['status'] == 'Скачать':
         await TranslateFSM.choose_chapter.set()
-    if data['status'] == 'Статус':
-        await TranslateFSM.book_status.set()
     await bot.send_message(message.from_user.id, f'Введи номер книги:\n\n{list_of_books}', reply_markup=kb_cancel)
 
 
@@ -102,21 +104,21 @@ async def send_translate_data(message: types.Message, state: FSMContext):
 async def choose_chapter(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['book'] = message.text
-    chapters = requests.get(f"http://185.26.96.154/api/chapters/{data['book']}/", auth=HTTPBasicAuth('Lazair', '9baY2jHszz3XqUy')).json()
-    print(chapters)
+    chapters = requests.get(f"http://185.26.96.154/api/chapters/{data['book']}/", auth=HTTPBasicAuth(login, password)).json()
     list_of_chapters = ''
     save_id = {}
+    save_chapter_name = {}
     i = 1
     for chapter in chapters:
-        list_of_chapters +=f'{i} . {chapter["name"]} --- {chapter["status"]} \n'
+        list_of_chapters +=f'{i}. {chapter["name"]} --- {chapter["status"]} \n'       
+        save_id[str(i)] = chapter["id"]
+        save_chapter_name[str(i)] = chapter["name"]
         i += 1
-        save_id[i] = chapter["id"]
         #list_of_chapters += f'{chapter["number"]}. {chapter["name"]} --- {chapter["status"]} \n'
         #save_id[chapter["number"]] = chapter["id"])
-    #if data['status'] == 'Перевести':
-    #    chapters = get_chapters_translate()
-    #if data['status'] == 'Скачать':
-    #    chapters = get_chapters_download().append('0. Перевести все главы')
+    async with state.proxy() as data:
+        data['save_id'] = save_id
+        data['chapter_name'] = save_chapter_name
     if data['status'] == 'Перевести':
         await TranslateFSM.translate_chapter_num.set()
     if data['status'] == 'Скачать':
@@ -124,28 +126,19 @@ async def choose_chapter(message: types.Message, state: FSMContext):
     await bot.send_message(message.from_user.id, f'Введи номер главы\n\n{list_of_chapters}')
 
 
-@dp.message_handler(state=TranslateFSM.translate_chapter_num)
-@dec_permission
-async def send_translate_data(message: types.Message, state: FSMContext):
-    if message.text == '0':
-        pass
-    async with state.proxy() as data:
-        data['chapter'] = message.text
-    # await send_to_translate(data['book'], data['chapter'])
-    await bot.send_message(message.from_user.id, f'Отправлено на перевод', reply_markup=kb_main)
-    await state.finish()
-
-
 @dp.message_handler(state=TranslateFSM.send_chapter_text)
 @dec_permission
 async def send_file(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['chapter'] = message.text
-    # text = get_chapter_text(data['book'], data['chapter'])
-    file_name = f"{data['book']}_{data['chapter']}.txt"
+    index = data['save_id'][data['chapter']]
+    text_request = requests.get(f"http://185.26.96.154/api/chapter_text/{index}/", auth=HTTPBasicAuth(login, password)).json()
+    text = text_request['text']
+    index_book = data['book_name'][data['book']]
+    index_chapter = data['chapter_name'][data['chapter']]
+    file_name = f"{index_book}_{index_chapter}.txt"
     with open(file_name, "w", encoding="utf-8") as f:
         f.write(text)
-        f.close()
     await bot.send_document(message.from_user.id, open(file_name, 'rb'))
     await bot.send_message(message.from_user.id, f'Вот твоя глава', reply_markup=kb_main)
     os.remove(file_name)
