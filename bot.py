@@ -9,7 +9,14 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters import Text
 from tg_bot_key import get_tg_api_key
+from requests.auth import HTTPBasicAuth
 
+#data = {
+#    "url": 'dat'
+#}
+
+#resp = requests.post('http://185.26.96.154/api/check_book/', json=data, auth=HTTPBasicAuth('Lazair', '9baY2jHszz3XqUy'))
+#print(resp.json())
 
 bot = Bot(token=get_tg_api_key())
 dp = Dispatcher(bot, storage=MemoryStorage())
@@ -65,16 +72,16 @@ async def cancel_handler(message: types.Message, state: FSMContext):
 async def choose_book(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['status'] = message.text
-    book_list = requests.get('http://185.26.96.154/api/books/').json()
-    print(book_list)
+    books = requests.get('http://185.26.96.154/api/books/', auth=HTTPBasicAuth('Lazair', '9baY2jHszz3XqUy')).json()
+    print(books)
     list_of_books = ''
-    for book in book_list:
+    for book in books:
         list_of_books += f'{book["id"]}. {book["name"]} --- {book["genre"]} --- {book["fandom"]} --- {book["status"]} \n'
     if data['status'] == 'Перевести' or data['status'] == 'Скачать':
         await TranslateFSM.choose_chapter.set()
     if data['status'] == 'Статус':
         await TranslateFSM.book_status.set()
-    await bot.send_message(message.from_user.id, f'Введи номер книги:\n{list_of_books}', reply_markup=kb_cancel)
+    await bot.send_message(message.from_user.id, f'Введи номер книги:\n\n{list_of_books}', reply_markup=kb_cancel)
 
 
 @dp.message_handler(state=TranslateFSM.translate_chapter_num)
@@ -95,19 +102,26 @@ async def send_translate_data(message: types.Message, state: FSMContext):
 async def choose_chapter(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['book'] = message.text
-    await message.reply('Выбери главу')
-    # if data['status'] == 'Перевести':
-    #     chapters = get_chapters_translate()
-    # if data['status'] == 'Скачать':
-    #     chapters = get_chapters_download().append('0. Перевести все главы')
+    chapters = requests.get(f"http://185.26.96.154/api/chapters/{data['book']}/", auth=HTTPBasicAuth('Lazair', '9baY2jHszz3XqUy')).json()
+    print(chapters)
     list_of_chapters = ''
-    for i in chapters:
-        list_of_chapters += f'{i}\n'
+    save_id = {}
+    i = 1
+    for chapter in chapters:
+        list_of_chapters +=f'{i} . {chapter["name"]} --- {chapter["status"]} \n'
+        i += 1
+        save_id[i] = chapter["id"]
+        #list_of_chapters += f'{chapter["number"]}. {chapter["name"]} --- {chapter["status"]} \n'
+        #save_id[chapter["number"]] = chapter["id"])
+    #if data['status'] == 'Перевести':
+    #    chapters = get_chapters_translate()
+    #if data['status'] == 'Скачать':
+    #    chapters = get_chapters_download().append('0. Перевести все главы')
     if data['status'] == 'Перевести':
         await TranslateFSM.translate_chapter_num.set()
     if data['status'] == 'Скачать':
         await TranslateFSM.send_chapter_text.set()
-    await bot.send_message(message.from_user.id, f'{list_of_chapters}\nВведи номер главы')
+    await bot.send_message(message.from_user.id, f'Введи номер главы\n\n{list_of_chapters}')
 
 
 @dp.message_handler(state=TranslateFSM.translate_chapter_num)
@@ -191,16 +205,3 @@ async def start(message: types.Message, state: FSMContext):
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
-
-# class Command(BaseCommand):
-#     help = 'Старт ТГ-бота'
-#
-#     def handle(self, *args, **options):
-#         executor.start_polling(dp, skip_updates=True)
-
-
-
-
-
-
-
