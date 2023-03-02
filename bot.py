@@ -80,19 +80,6 @@ async def choose_book(message: types.Message, state: FSMContext):
     await bot.send_message(message.from_user.id, f'Введи номер книги:\n\n{list_of_books}', reply_markup=kb_cancel)
 
 
-@dp.message_handler(state=TranslateFSM.translate_chapter_num)
-@dec_permission
-async def send_translate_data(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data['book'] = message.text[0]
-    # books_state = get_book_state(data['book'])
-    list_of_chapters = ''
-    for i in books_state:
-        list_of_chapters += f'{i}\n'
-    await bot.send_message(message.from_user.id, f'Отправлено на перевод', reply_markup=kb_main)
-    await state.finish()
-
-
 @dp.message_handler(state=TranslateFSM.choose_chapter)
 @dec_permission
 async def choose_chapter(message: types.Message, state: FSMContext):
@@ -117,7 +104,18 @@ async def choose_chapter(message: types.Message, state: FSMContext):
         await TranslateFSM.translate_chapter_num.set()
     if data['status'] == 'Скачать':
         await TranslateFSM.send_chapter_text.set()
-    await bot.send_message(message.from_user.id, f'Введи номер главы\n\n{list_of_chapters}')
+    await bot.send_message(message.from_user.id, f'Введи номер главы:\n\n{list_of_chapters}')
+
+
+@dp.message_handler(state=TranslateFSM.translate_chapter_num)
+@dec_permission
+async def send_translate_data(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['chapter'] = message.text
+    index = data['save_id'][data['chapter']]
+    requests.get(f"http://185.26.96.154/api/translate_chapter/{index}/", auth=HTTPBasicAuth(login, password))
+    await bot.send_message(message.from_user.id, f'Отправлено на перевод', reply_markup=kb_main)
+    await state.finish()
 
 
 @dp.message_handler(state=TranslateFSM.send_chapter_text)
@@ -143,7 +141,7 @@ async def send_file(message: types.Message, state: FSMContext):
 @dec_permission
 async def translate_state(message: types.Message, state: FSMContext):
     await TranslateFSM.pars_book.set()
-    await bot.send_message(message.from_user.id, f'Введи ссылку', reply_markup=kb_cancel)
+    await bot.send_message(message.from_user.id, f'Введи ссылку:', reply_markup=kb_cancel)
 
 
 @dp.message_handler(state=TranslateFSM.pars_book)
@@ -165,7 +163,7 @@ async def download_book(message: types.Message, state: FSMContext):
         for fandom in fandoms:
             list_of_fandom += f'{fandom["id"]}: {fandom["name"]}\n'       
         await TranslateFSM.fandom.set()
-        await bot.send_message(message.from_user.id, f'Введи номер фендома: \n\n{list_of_fandom}')
+        await bot.send_message(message.from_user.id, f'Введи номер фендома:\n\n{list_of_fandom}')
     else:
         await bot.send_message(message.from_user.id, f'Произошла ошибка: {check}', reply_markup=kb_main)
         await state.finish()
@@ -176,11 +174,12 @@ async def download_book(message: types.Message, state: FSMContext):
 async def choose_fandom(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['fandom'] = message.text
+    genres = requests.get(f"http://185.26.96.154/api/genres/", auth=HTTPBasicAuth(login, password)).json()
     list_of_genre = ''
-    for i in genre:
-        list_of_genre += f'{i}\n'
+    for genre in genres:
+        list_of_genre += f'{genre["id"]}: {genre["name"]}\n'       
     await TranslateFSM.genre.set()
-    await bot.send_message(message.from_user.id, f'{list_of_genre}\nВведи номер жанра')
+    await bot.send_message(message.from_user.id, f'Введи номер жанра:\n\n{list_of_genre}')
 
 
 @dp.message_handler(state=TranslateFSM.genre)
@@ -188,6 +187,12 @@ async def choose_fandom(message: types.Message, state: FSMContext):
 async def choose_fandom(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['genre'] = message.text
+    parser_data = {
+        "url": data['book_link'],
+        "fandom": data['fandom'],
+        "genre": data["genre"]
+        }
+    requests.post(f"http://185.26.96.154/api/parse_book/", json=parser_data, auth=HTTPBasicAuth(login, password))
     await state.finish()
     await bot.send_message(message.from_user.id, f'Сделано ^^', reply_markup=kb_main)
 
