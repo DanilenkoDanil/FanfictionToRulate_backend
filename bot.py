@@ -11,14 +11,8 @@ from aiogram.dispatcher.filters import Text
 from tg_bot_key import get_tg_api_key, get_login_data
 from requests.auth import HTTPBasicAuth
 
+
 login, password = get_login_data()
-#data = {
-#    "url": 'dat'
-#}
-
-#resp = requests.post('http://185.26.96.154/api/check_book/', json=data, auth=HTTPBasicAuth('Lazair', '9baY2jHszz3XqUy'))
-#print(resp.json())
-
 bot = Bot(token=get_tg_api_key())
 dp = Dispatcher(bot, storage=MemoryStorage())
 
@@ -134,9 +128,9 @@ async def send_file(message: types.Message, state: FSMContext):
     index = data['save_id'][data['chapter']]
     text_request = requests.get(f"http://185.26.96.154/api/chapter_text/{index}/", auth=HTTPBasicAuth(login, password)).json()
     text = text_request['text']
-    index_book = data['book_name'][data['book']]
-    index_chapter = data['chapter_name'][data['chapter']]
-    file_name = f"{index_book}_{index_chapter}.txt"
+    book = data['book_name'][data['book']]
+    chapter = data['chapter_name'][data['chapter']]
+    file_name = f"{book}_{chapter}.txt"
     with open(file_name, "w", encoding="utf-8") as f:
         f.write(text)
     await bot.send_document(message.from_user.id, open(file_name, 'rb'))
@@ -157,16 +151,24 @@ async def translate_state(message: types.Message, state: FSMContext):
 async def download_book(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['book_link'] = message.text
-    # check = check_book_in_bd(data[0])
-    # if check is True:
-    #     await bot.send_message(message.from_user.id, f'Эта книга уже есть!', reply_markup=kb_main)
-    #     await state.finish()
-    # else:
-    list_of_fandom = ''
-    for i in fandom:
-        list_of_fandom += f'{i}\n'
-    await TranslateFSM.fandom.set()
-    await bot.send_message(message.from_user.id, f'{list_of_fandom}\nВведи номер фендома')
+    data = {
+        "url": data['book_link']
+    }
+    check = str(requests.post(f"http://185.26.96.154/api/check_book/", json=data, auth=HTTPBasicAuth(login, password)))
+    print(check)
+    if check == '<Response [200]>':
+        await bot.send_message(message.from_user.id, f'Эта книга уже есть!', reply_markup=kb_main)
+        await state.finish()
+    elif check == '<Response [400]>':
+        fandoms = requests.get(f"http://185.26.96.154/api/fandoms/", auth=HTTPBasicAuth(login, password)).json()
+        list_of_fandom = ''
+        for fandom in fandoms:
+            list_of_fandom += f'{fandom["id"]}: {fandom["name"]}\n'       
+        await TranslateFSM.fandom.set()
+        await bot.send_message(message.from_user.id, f'Введи номер фендома: \n\n{list_of_fandom}')
+    else:
+        await bot.send_message(message.from_user.id, f'Произошла ошибка: {check}', reply_markup=kb_main)
+        await state.finish()
 
 
 @dp.message_handler(state=TranslateFSM.fandom)
