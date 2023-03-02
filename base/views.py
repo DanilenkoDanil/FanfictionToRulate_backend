@@ -3,29 +3,33 @@ from base.serializers import FandomSerializer, GenreSerializer, BookSerializer, 
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import authentication, permissions
 from rest_framework import status
 from base.parser import parse_book
 from base.chat_gpt import translate_chapter
+from rest_framework.permissions import IsAuthenticated
 
 
 class FandomListAPIView(generics.ListAPIView):
     queryset = Fandom.objects.all()
     serializer_class = FandomSerializer
+    permission_classes = [IsAuthenticated]
 
 
 class GenreListAPIView(generics.ListAPIView):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    permission_classes = [IsAuthenticated]
 
 
 class BookListAPIView(generics.ListAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
+    permission_classes = [IsAuthenticated]
 
 
 class ChapterListAPIView(generics.ListAPIView):
     serializer_class = ChapterSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return Chapter.objects.filter(book__id=self.kwargs['pk'])
@@ -33,6 +37,7 @@ class ChapterListAPIView(generics.ListAPIView):
 
 class ChapterRetrieveAPIView(generics.RetrieveAPIView):
     serializer_class = ChapterTextSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return Chapter.objects.filter(id=self.kwargs['pk'])
@@ -40,6 +45,7 @@ class ChapterRetrieveAPIView(generics.RetrieveAPIView):
 
 class CheckBookAPIView(APIView):
     queryset = Book.objects.all()
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, format=None):
         try:
@@ -51,6 +57,7 @@ class CheckBookAPIView(APIView):
 
 class ParseBookAPIView(APIView):
     queryset = Book.objects.all()
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, format=None):
         try:
@@ -63,6 +70,7 @@ class ParseBookAPIView(APIView):
 
 class TranslateChapterAPIView(APIView):
     queryset = Book.objects.all()
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, pk, format=None):
         try:
