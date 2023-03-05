@@ -10,7 +10,10 @@ from background_task import background
 def parse_book(url: str, genre: str, fandom: str) -> bool:
     book_name = False
     try:
-        driver = undetected_chromedriver.Chrome()
+        options = undetected_chromedriver.ChromeOptions()
+        options.add_argument('headless')
+        options.add_argument('--no-sandbox')
+        driver = undetected_chromedriver.Chrome(options=options)
         page = url.split('/')[5]
         while True:
             new_link_lst = url.split('/')
