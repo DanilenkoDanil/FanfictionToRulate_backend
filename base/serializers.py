@@ -23,10 +23,10 @@ class BookSerializer(serializers.HyperlinkedModelSerializer):
 class ChapterSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Chapter
-        fields = ['id', 'name', 'status']
+        fields = ['id', 'number', 'name', 'status']
 
 
 class ChapterTextSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Chapter
-        fields = ['id', 'name', 'text', 'status']
+        fields = ['id', 'number', 'name', 'text', 'status']
