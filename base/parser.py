@@ -38,3 +38,6 @@ def parse_book(url: str, genre: str, fandom: str) -> bool:
     finally:
         driver.quit()
         return False
+
+
+url = 'https://www.fanfiction.net/s/13955771/1/A-Flight-Into-Games'

@@ -23,6 +23,7 @@ def packet_division(text: str) -> dict:
             current_packet = ''
             counter += 1
         current_packet += chunk
+    packets[counter] = current_packet
     return packets
 
 
@@ -68,7 +69,7 @@ def packets_translate(packets: list, chat_bot) -> None:
         except Exception as e:
             print(e)
             time.sleep(30)
-        packets_dict[packet] = translate(packets_dict[packet], chat_bot)
+            packets_dict[packet] = translate(packets_dict[packet], chat_bot)
         print(packets_dict)
 
 
@@ -107,6 +108,8 @@ def translate_chapter(chapter_id):
     count_thread_packets = len(packets_dict) // thread_num
     count_thread_packets += 1
 
+    threads = []
+
     for i, account in zip(range(thread_num), account_list):
         print(i)
         th = Thread(target=packets_translate,
@@ -115,10 +118,16 @@ def translate_chapter(chapter_id):
                     )
                     )
         th.start()
+        threads.append(th)
+
+    for t in threads:
+        t.join()
 
     result_text = ''
     for i in packets_dict.values():
         result_text += i
+    print('----------------')
+    print(result_text)
 
     if len(chapter.text) // 2 < len(result_text):
         chapter.text = result_text
