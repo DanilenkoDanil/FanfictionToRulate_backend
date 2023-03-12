@@ -1,5 +1,6 @@
-from base.models import Book, Fandom, Genre, Chapter, Setting
-from base.serializers import FandomSerializer, GenreSerializer, BookSerializer, ChapterSerializer, ChapterTextSerializer
+from base.models import Book, Fandom, Genre, Chapter, Setting, Admin, AdminTroll
+from base.serializers import FandomSerializer, GenreSerializer, BookSerializer, ChapterSerializer, \
+    ChapterTextSerializer, TrollAdminSerializer, AdminSerializer
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -25,6 +26,20 @@ class BookListAPIView(generics.ListAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [IsAuthenticated]
+
+
+class AdminListAPIView(generics.ListAPIView):
+    queryset = Admin.objects.all()
+    serializer_class = AdminSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class AdminTrollListAPIView(generics.ListAPIView):
+    serializer_class = TrollAdminSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return AdminTroll.objects.filter(admin__telegram_id=self.kwargs['pk'])
 
 
 class ChapterListAPIView(generics.ListAPIView):

@@ -1,11 +1,16 @@
 from django.contrib import admin
-from .models import Book, Chapter, Admin, Fandom, Genre, Setting, ChatGPTCredentials
+from .models import Book, Chapter, Admin, Fandom, Genre, Setting, ChatGPTCredentials, AdminTroll
 
 
 @admin.register(Book)
 class SettingAdmin(admin.ModelAdmin):
     list_display = ('name', 'genre', 'fandom', 'link', 'status')
     search_fields = ('name', 'status')
+
+
+@admin.register(AdminTroll)
+class SettingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'admin', 'text')
 
 
 @admin.register(Chapter)

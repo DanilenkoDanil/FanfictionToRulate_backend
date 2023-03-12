@@ -22,10 +22,25 @@ class Chapter(models.Model):
 
 
 class Admin(models.Model):
-    name = models.CharField(max_length=150)
+    users = (
+        ('Ilona', 'Илона'),
+        ('Dan', 'Данил'),
+        ('Lex', 'Лёха'),
+        ('Andrew', 'Андрей'),
+    )
+    name = models.CharField(choices=users, max_length=100)
     telegram_id = models.CharField(max_length=150)
     iqos = models.BooleanField(default=False)
     status = models.BooleanField(default=False)
+    troll_mode = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+
+class AdminTroll(models.Model):
+    admin = models.ForeignKey(Admin, models.CASCADE)
+    text = models.TextField()
 
 
 class Fandom(models.Model):
