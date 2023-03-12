@@ -21,7 +21,7 @@ class SettingAdmin(admin.ModelAdmin):
 
 @admin.register(Admin)
 class SettingAdmin(admin.ModelAdmin):
-    list_display = ('name', 'iqos', 'status')
+    list_display = ('name', 'iqos', 'status', 'troll_mode')
 
 
 @admin.register(Fandom)
