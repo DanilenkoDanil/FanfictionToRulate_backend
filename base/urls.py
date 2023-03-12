@@ -1,7 +1,7 @@
 from django.urls import path
 from base.views import FandomListAPIView, GenreListAPIView, BookListAPIView, ChapterListAPIView, \
     ChapterRetrieveAPIView, CheckBookAPIView, ParseBookAPIView, TranslateChapterAPIView, AdminListAPIView, \
-    AdminTrollListAPIView
+    AdminTrollListAPIView, TrollIlonaTwoHoursAPIView
 
 urlpatterns = [
     path('fandoms/', FandomListAPIView.as_view()),
@@ -13,5 +13,7 @@ urlpatterns = [
     path('troll_admin/<int:pk>/', AdminTrollListAPIView.as_view()),
     path('check_book/', CheckBookAPIView.as_view()),
     path('parse_book/', ParseBookAPIView.as_view()),
+    path('troll_ilona/', TrollIlonaTwoHoursAPIView.as_view()),
     path('translate_chapter/<int:pk>/', TranslateChapterAPIView.as_view()),
+
 ]
